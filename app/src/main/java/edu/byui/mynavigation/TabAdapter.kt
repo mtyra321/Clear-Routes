@@ -20,7 +20,6 @@ class TabAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
         return "Tab " + (position + 1)
     }
     fun addFrag(fragment: Fragment?, title: String?) {
-//
         if (fragment != null) {
             mFragmentList.add(fragment)
         }
@@ -28,10 +27,19 @@ class TabAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
             mFragmentTitleList.add(title)
         }
     }
-    fun removeFragment(position: Int) {
-        mFragmentTitleList.removeAt(position)
-        mFragmentList.removeAt(position)
-       // notifyDatasetChanged()
-    }
+    fun removeAllFragments() {
+        mFragmentList.removeAllElements()
+        mFragmentTitleList.removeAllElements()
 
+        notifyDataSetChanged()
+    }
+    fun removeFragment(index: Int) {
+        mFragmentList.removeAt(index)
+        mFragmentTitleList.removeAt(index)
+
+        notifyDataSetChanged()
+    }
+     override fun notifyDataSetChanged() {
+        super.notifyDataSetChanged()
+    }
 }

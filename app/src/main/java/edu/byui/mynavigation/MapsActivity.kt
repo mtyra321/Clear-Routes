@@ -1,7 +1,6 @@
 package edu.byui.mynavigation
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -65,6 +64,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var numberOfLines by Delegates.notNull<Int>()
     private var destinationList = ArrayList<String>()
     private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
+    var adapter = TabAdapter(supportFragmentManager)
+
 //    var dataParser = DataParser()
 //    private var distances = legDistances
 //    private var stringEndPoints: List<String> = listOf("Rexburg", "Lincoln")
@@ -83,8 +84,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         setUpDestinations()
         binding.addLineBtn.setOnClickListener {
             Add_Line()
-            //binding.stops.text = "e"
-            Log.i("e", "numLines: ${numberOfLines}")
         }
         binding.getData.setOnClickListener {
             saveData()
@@ -388,11 +387,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     fun makeWeatherVisible(view : View){
         if(binding.weather.visibility == View.VISIBLE){
-
             binding.weather.visibility = View.INVISIBLE
 
         }else if (binding.weather.visibility == View.INVISIBLE){
             binding.weather.visibility = View.VISIBLE
+            binding.planLayout.visibility = View.INVISIBLE
 
         }
 
@@ -402,8 +401,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             binding.planLayout.visibility = View.INVISIBLE
 
         }else if (binding.planLayout.visibility == View.INVISIBLE){
-      //      binding.planLayout.findViewById<LinearLayout>(R.id.stops).findViewById<>(R.id.)
             binding.planLayout.visibility = View.VISIBLE
+            binding.weather.visibility = View.INVISIBLE
 
         }
 
@@ -413,13 +412,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     }
 
-
-    var adapter = TabAdapter(supportFragmentManager)
-
     private fun setupViewPager() {
-
-        // adapter = ViewPagerAdapter(supportFragmentManager)
-        //addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(binding.tabLayout))
         this.binding.viewPager.setAdapter(adapter);
 
     }
@@ -460,10 +453,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     }
 
     private fun setupTabLayout() {
+
+        if(binding.tabLayout.tabCount > 1) {
+            for (i in binding.tabLayout.tabCount - 1 downTo 0) {
+                adapter.destroyItem(binding.viewPager, i, adapter.getItem(i))
+                binding.tabLayout.removeTabAt(i)
+            }
+            adapter.removeAllFragments()
+            adapter.notifyDataSetChanged();
+            setupViewPager()
+        }
+
+
         binding.tabLayout.apply {
 
             for (i in coords?.indices!!) {
-                var mFragment = WeatherFragment(coords!![i], "city $i")
+                val mFragment = WeatherFragment(coords!![i], "city $i")
                 val mBundle = Bundle()
                 mBundle.putString("mText", "e")
                 mFragment.arguments = mBundle
@@ -471,9 +476,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                 //addTab(this.newTab().setCustomView(R.layout.second_fragment))
                 addTab(this.newTab().setText("city $i"))
             }
-
-
-            // tabGravity = TabLayout.GRAVITY_FILL
 
             addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -578,18 +580,5 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         }
     }
-//    fun Activity.hideKeyboard() {
-//        hideKeyboard(currentFocus ?: View(this))
-//    }
-//    fun hideSoftKeyboard(activity: Activity) {
-//        val inputMethodManager: InputMethodManager = activity.getSystemService(
-//            INPUT_METHOD_SERVICE
-//        ) as InputMethodManager
-//        if (inputMethodManager.isAcceptingText()) {
-//            inputMethodManager.hideSoftInputFromWindow(
-//                activity.currentFocus!!.windowToken,
-//                0
-//            )
-//        }
-//    }
+
 }

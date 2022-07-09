@@ -1,7 +1,6 @@
 package edu.byui.mynavigation
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,13 +11,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.maps.model.LatLng
-import edu.byui.mynavigation.DailyForecast
-import edu.byui.mynavigation.ImageModel
-import edu.byui.mynavigation.WeatherDisplayAdapter
-import edu.byui.mynavigation.BuildConfig
 import edu.byui.mynavigation.databinding.WeatherFragmentBinding
-import edu.byui.mynavigation.R
-
 
 class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
 
@@ -49,12 +42,8 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
     ): View {
         binding = WeatherFragmentBinding.inflate(layoutInflater)
         binding.convert.setOnClickListener {
-            Log.i("setufsd", "onclick")
             binding.convert.text = convertTemp()
         }
-
-
-
         return binding.root
     }
 
@@ -72,19 +61,8 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
         binding.label.text = "e"
     }
 
-
-//    fun LoadImageFromWebOperations(url: String?): Drawable {
-//
-//            val inSt: InputStream = URL(url).getContent() as InputStream
-//           // Drawable.createFromStream(inSt, "src name")
-//        return Drawable.createFromStream(inSt, "src name")
-//    }
-
-
-
     fun convertTemp(): String{
         var temps = "E"
-            Log.i("t", "List is not null")
             for (i in listItems) {
                 if (i.degrees == "F") {
                     i.convertToCelsius()
@@ -95,19 +73,10 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
 
                 }
             }
-          //  activity?.runOnUiThread(java.lang.Runnable {
                 val listView = view?.findViewById<ListView>(R.id.ForecastList)
 
-//                val adapter = view?.let { ArrayAdapter(it.context, android.R.layout.simple_list_item_1, listItems) }
-//                if (listView != null) {
-//                    listView.adapter = adapter
-//                }
-        weatherDisplayAdapter = context?.let { WeatherDisplayAdapter(it, listItems!!) }
+        weatherDisplayAdapter = context?.let { WeatherDisplayAdapter(it, listItems) }
         listView!!.adapter = weatherDisplayAdapter
-
-
-        //  })
-
         return temps
     }
 
@@ -126,10 +95,8 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
             { response ->
                 val jsonDailyArray = response.getJSONArray("daily")
                   listItems = ArrayList<DailyForecast>(jsonDailyArray.length())
-                //    Log.i("e",  " " +jsonDailyArray.length()  )
                 for (i in 0 until  jsonDailyArray.length()) {
-                  //  Log.i("s", "in loop")
-                    var d = DailyForecast()
+                    val d = DailyForecast()
 
                     d.max = jsonDailyArray.getJSONObject(i).getJSONObject("temp").getDouble("max")
                     d.min = jsonDailyArray.getJSONObject(i).getJSONObject("temp").getDouble("min")
@@ -173,23 +140,12 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
                     } else if(d.iconId == "icon50n"){
                         d.icon = R.drawable.icon50n
                     }
-
-
                     d.weatherDesc = jsonDailyArray.getJSONObject(i).getJSONArray("weather").getJSONObject(0).getString("main")
-                   // Log.i("esldakjshd", "List items length" + listItems.size)
                     listItems.add(d)
 
                 }
-//                val customAdapter = CustomAdapter(this, arrayList)
-//                if (listView != null) {
-//                    listView.setAdapter(customAdapter)
-//                }
                 val listView = view?.findViewById<ListView>(R.id.ForecastList)
-//                val adapter = view?.let { ArrayAdapter(it.context, android.R.layout.simple_list_item_1, listItems) }
-//                if (listView != null) {
-//                    listView.adapter = adapter
-//                }
-                weatherDisplayAdapter = context?.let { WeatherDisplayAdapter(it, listItems!!) }
+                weatherDisplayAdapter = context?.let { WeatherDisplayAdapter(it, listItems) }
                 listView!!.adapter = weatherDisplayAdapter
             },
             { _ ->
