@@ -48,8 +48,54 @@
         android:layout_gravity="left|bottom"
         android:text="Directions"
         android:padding="10dp"
+        android:onClick="makeDirectionsVisible"
+        android:visibility="invisible"
         android:layout_marginTop="20dp"
         android:paddingLeft="20dp"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/directions_layout"
+        android:layout_width="411dp"
+        android:layout_height="673dp"
+        android:visibility="invisible"
+        android:layout_marginBottom="57dp"
+        >
+
+
+
+        <ScrollView
+
+            android:layout_width="409dp"
+            android:layout_height="match_parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:id="@+id/directions"
+                android:layout_width="409dp"
+                android:layout_height="200dp"
+                android:layout_marginStart="1dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="1dp"
+                android:layout_marginBottom="1dp"
+                android:orientation="vertical">
+
+            </LinearLayout>
+        </ScrollView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/weather"

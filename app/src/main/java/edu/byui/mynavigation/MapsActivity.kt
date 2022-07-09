@@ -18,6 +18,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.common.api.ResolvableApiException
@@ -65,6 +66,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var destinationList = ArrayList<String>()
     private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
     var adapter = TabAdapter(supportFragmentManager)
+    private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
+
 
 //    var dataParser = DataParser()
 //    private var distances = legDistances
@@ -90,6 +93,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             makeNewPlanVisible(it)
             parseDestinationList() // separates out locations, calls url creator, creates api call
         }
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -392,7 +396,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }else if (binding.weather.visibility == View.INVISIBLE){
             binding.weather.visibility = View.VISIBLE
             binding.planLayout.visibility = View.INVISIBLE
-
+            binding.directionsLayout.visibility = View.INVISIBLE
         }
 
     }
@@ -403,13 +407,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }else if (binding.planLayout.visibility == View.INVISIBLE){
             binding.planLayout.visibility = View.VISIBLE
             binding.weather.visibility = View.INVISIBLE
+            binding.directionsLayout.visibility = View.INVISIBLE
 
         }
 
     }
 
     fun makeDirectionsVisible(view:View){
+        Log.i("jim", "Make directions visible")
+        if(binding.directionsLayout.visibility == View.VISIBLE){
+            binding.directionsLayout.visibility = View.INVISIBLE
 
+        }else if (binding.directionsLayout.visibility == View.INVISIBLE){
+            binding.directionsLayout.visibility = View.VISIBLE
+            binding.planLayout.visibility = View.INVISIBLE
+            binding.weather.visibility = View.INVISIBLE
+
+        }
     }
 
     private fun setupViewPager() {
@@ -555,17 +569,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
         //now that plan is available, make the weather tab available
         binding.weatherBtn.visibility = View.VISIBLE
-        setupTabLayout()
+        binding.directionBtn.visibility = View.VISIBLE
+
+                setupTabLayout()
         setupViewPager()
         hideKeybord()
-
+        for(i in directionList){
+            add_direction_Line(i)
+        }
         //relocate map
        // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
 
 
 
     }
+    fun add_direction_Line( direction:String) {
 
+        val directionView = TextView(this)
+
+        directionView.text = direction
+        binding.directions.addView(directionView, binding.directions.childCount)
+
+        numberOfLines++
+    }
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
