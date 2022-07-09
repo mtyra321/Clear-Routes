@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MapsActivity">
+
+
+    <!--    <androidx.constraintlayout.widget.ConstraintLayout-->
+    <!--        android:id="@+id/curentWeather"-->
+    <!--        xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--        xmlns:app="http://schemas.android.com/apk/res-auto"-->
+    <!--        xmlns:tools="http://schemas.android.com/tools"-->
+    <!--        android:visibility="invisible"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent">-->
+    <!--        -->
+    <!--    </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:text="Plan Trip"
+        android:padding="10dp"
+        android:onClick="makeNewPlanVisible"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/weatherBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|bottom"
+        android:visibility="invisible"
+        android:text="Weather"
+        android:padding="10dp"
+        android:onClick="makeWeatherVisible"
+        android:layout_marginTop="20dp"
+        android:paddingRight="20dp"/>
+
+    <Button
+        android:id="@+id/directionBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|bottom"
+        android:text="Directions"
+        android:padding="10dp"
+        android:layout_marginTop="20dp"
+        android:paddingLeft="20dp"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/weather"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="#00B8B2"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/viewPager"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tabLayout" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/plan_layout"
+        android:layout_width="411dp"
+        android:layout_height="673dp"
+        android:layout_marginBottom="57dp"
+        android:visibility="invisible">
+
+        <ScrollView
+
+            android:layout_width="409dp"
+            android:layout_height="match_parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:id="@+id/stops"
+                android:layout_width="409dp"
+                android:layout_height="200dp"
+                android:layout_marginStart="1dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="1dp"
+                android:layout_marginBottom="1dp"
+                android:orientation="vertical">
+
+            </LinearLayout>
+        </ScrollView>
+
+        <Button
+            android:id="@+id/addLineBtn"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:text="add stop"
+            app:layout_constraintEnd_toEndOf="@+id/plan_layout"
+            app:layout_constraintTop_toTopOf="parent"/>
+        <Button
+            android:id="@+id/getData"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:text="create plan"
+            app:layout_constraintEnd_toEndOf="@+id/addLineBtn"
+            app:layout_constraintStart_toStartOf="@+id/addLineBtn"
+            app:layout_constraintTop_toBottomOf="@+id/addLineBtn"
+            app:layout_constraintVertical_bias="0.0"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</fragment>
