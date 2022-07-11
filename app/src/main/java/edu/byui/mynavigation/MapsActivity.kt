@@ -61,7 +61,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var departureTime = LocalDateTime.now(ZoneOffset.UTC).atZone(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
     private var numberOfLines by Delegates.notNull<Int>()
     private var destinationList = ArrayList<String>()
-    private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
+    private lateinit var coords : MutableList<LatLng>
     var adapter = TabAdapter(supportFragmentManager)
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
     private val sdf = SimpleDateFormat("hh:mm")
@@ -114,6 +114,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                 super.onLocationResult(p0)
 
                 lastLocation = p0.lastLocation!!
+              //  addSingleTab(lastLocation.latitude, lastLocation.longitude)
                 placeMarkerOnMap(LatLng(lastLocation.latitude, lastLocation.longitude))
             }
         }
@@ -133,13 +134,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var locDetail: MutableList<Address>?
         var locLatLngs: ArrayList<LatLng> = ArrayList<LatLng>()
 //        var geocoder = Geocoder(applicationContext)
-
+        Log.i("jimbo", "in loc coords")
+        destinationList.add(0 , "current location")
+        locLatLngs.add(0, LatLng(lastLocation.latitude, lastLocation.longitude))
         for (p in locStrings) {
-            locDetail = geocoder.getFromLocationName(p,1)
-            var coord_lat = locDetail[0].latitude
-            var coord_lng = locDetail[0].longitude
-            var coords = LatLng(coord_lat,coord_lng)
-            locLatLngs.add(coords)
+            if(p != "current location") {
+                locDetail = geocoder.getFromLocationName(p, 1)
+                Log.i("jimbo", "locdetail: ${locDetail} in p ${p}")
+                val coord_lat = locDetail[0].latitude
+                val coord_lng = locDetail[0].longitude
+                val coords = LatLng(coord_lat, coord_lng)
+                locLatLngs.add(coords)
+                Log.i("jimbo", "adding coord ${coords}")
+            }
         }
         return locLatLngs
     }
@@ -164,16 +171,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var waypointStr = ""
         var urlDestStr = ""
 //        var addressList= ArrayList<Address>()
-        originLoc = (destinationList[0]).replace(" ","")
+        originLoc = (destinationList[1]).replace(" ","")
 //        val originCoords = placeMarkerAtString(originLoc)
-        destinationList.removeAt(0)
+        destinationList.removeAt(1)
         destinationLoc = (destinationList.last()).replace(" ","")
 //        placeMarkerAtString(destinationLoc)
         destinationList.removeLast()
         val urlOriginLocStr = "origin=$originLoc"
         var destStr = "&destination=$destinationLoc"
-        if (destinationList.size > 0) {
+        if (destinationList.size > 1) {
             for (w in destinationList) {
+                Log.i("jimbo", "destination: ${w}")
                 if (w != "") {
                     var wPoint = w.replace(" ", "")
                     waypointStr = if (waypointStr == "") {
@@ -416,10 +424,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     }
 
-    private fun addSingleTab(lat: Double, long: Double, location: Boolean){
-        if(coords != null) {
-            coords!!.add(LatLng(lat, long))
-            val i = coords?.size?.minus(1)
+    private fun addSingleTab(lat: Double, long: Double){
+        Log.i("jimbo", "adding single tab")
+            coords.add(LatLng(lat, long))
+            val i = coords.size.minus(1)
             binding.tabLayout.apply {
 
                 var mFragment = WeatherFragment(coords!![i!!], "city $i")
@@ -427,7 +435,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                 mBundle.putString("mText", "e")
                 mFragment.arguments = mBundle
                 adapter.addFrag(mFragment, "arguments $coords[i]")
-                addTab(this.newTab().setText("city $i"))
+                addTab(this.newTab().setText("current location"))
 
                 addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                     override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -447,14 +455,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
                 }
             }
-        }
+
         setupViewPager()
     }
 
     private fun setupTabLayout() {
 
         if(binding.tabLayout.tabCount > 1) {
-            for (i in binding.tabLayout.tabCount - 1 downTo 0) {
+            for (i in binding.tabLayout.tabCount - 1 downTo 1) {
                 adapter.destroyItem(binding.viewPager, i, adapter.getItem(i))
                 binding.tabLayout.removeTabAt(i)
             }
@@ -466,14 +474,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
         binding.tabLayout.apply {
 
-            for (i in coords?.indices!!) {
-                val mFragment = WeatherFragment(coords!![i], "city $i")
+            for (i in coords.indices) {
+                Log.i("jimbo","going through coords: ${coords[i]}")
+                val mFragment = WeatherFragment(coords[i], destinationList[i])
                 val mBundle = Bundle()
-                mBundle.putString("mText", "e")
+               // mBundle.putString("mText", "e")
                 mFragment.arguments = mBundle
                 adapter.addFrag(mFragment, "arguments $coords[i]")
-                //addTab(this.newTab().setCustomView(R.layout.second_fragment))
-                addTab(this.newTab().setText("city $i"))
+                addTab(this.newTab().setText(destinationList[i]))
             }
 
             addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -546,6 +554,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
             // add the data to arraylist
             destinationList.add(location)
+            Log.i("jimbo", "destinationlist size ${destinationList.size}")
+            Log.i("jimbo", "destinationlist add ${destinationList[i]}")
 
             // stopName.text.clear()
             v.findViewById<EditText>(R.id.et_name).text.clear()
@@ -555,15 +565,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         //now that plan is available, make the weather tab available
         binding.weatherBtn.visibility = View.VISIBLE
         binding.directionBtn.visibility = View.VISIBLE
+        coords = getLocCoords(destinationList)
 
-                setupTabLayout()
+        setupTabLayout()
         setupViewPager()
         hideKeybord()
         for(i in directionList){
             add_direction_Line(i)
         }
-        //relocate map
-       // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
 
 
 
