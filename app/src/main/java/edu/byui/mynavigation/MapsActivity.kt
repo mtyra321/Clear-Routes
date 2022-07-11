@@ -1,6 +1,7 @@
 package edu.byui.mynavigation
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -59,7 +60,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var destinationList = ArrayList<String>()
     private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
     var adapter = TabAdapter(supportFragmentManager)
-    private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
+    private  var directionList: MutableList<String> = mutableListOf<String>("text1","more text","more directions","4")
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -345,11 +346,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
 //        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
+        Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
         placeMarkerOnMap(linePoints[0])
         placeMarkerOnMap(linePoints.last())
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
-//        addSingleTab(linePoints) // list of LatLng values
     }
 
     fun makeWeatherVisible(view : View){
@@ -508,6 +509,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         (view.getParent() as ViewManager).removeView(view)
     }
 
+    fun getDirectionText() {
+        val instructions = DataParser().instructions
+        Log.d("instruct","Instructions: $instructions")
+        for (i in instructions) {
+            add_direction_Line(i)
+        }
+//        for(i in directionList){
+//            add_direction_Line(i)
+//        }
+
+    }
+
     private fun saveData() {
         destinationList.clear()
         // this counts the no of child layout
@@ -538,9 +551,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                 setupTabLayout()
         setupViewPager()
         hideKeybord()
-        for(i in directionList){
-            add_direction_Line(i)
-        }
+        getDirectionText()
+
         //relocate map
        // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
 
