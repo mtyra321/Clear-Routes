@@ -8,17 +8,16 @@ import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewManager
-import android.view.WindowManager
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.common.api.ResolvableApiException
@@ -34,8 +33,11 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.tabs.TabLayout
 import edu.byui.mynavigation.databinding.ActivityMapsBinding
 import java.io.IOException
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.properties.Delegates
 
 
@@ -59,6 +61,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var originLat = 0.0
     private var originLong = 0.0
     private var currentPolyline: Polyline? = null
+    private var polyline2: Polyline? = null
+
     // sets the departureTime to the current time
     private var departureTime = LocalDateTime.now(ZoneOffset.UTC).atZone(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
     //if R.something doesn't work, remove the .R import
@@ -67,6 +71,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
     var adapter = TabAdapter(supportFragmentManager)
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
+    private val sdf = SimpleDateFormat("hh:mm")
 
 
 //    var dataParser = DataParser()
@@ -93,7 +98,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             makeNewPlanVisible(it)
             parseDestinationList() // separates out locations, calls url creator, creates api call
         }
+        binding.buttonDate.setOnClickListener{
+            if(binding.timePicker.visibility == View.VISIBLE){
+                //   OnClickTime()
+//                binding.showTime.text = time
+                binding.showTime.visibility = View.VISIBLE
+                binding.timePicker.visibility = View.INVISIBLE
 
+
+            }else if (binding.timePicker.visibility == View.INVISIBLE){
+                binding.showTime.visibility = View.INVISIBLE
+                binding.timePicker.visibility = View.VISIBLE
+
+            }
+
+        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -219,6 +238,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         // if bad weather => &traffic_model=pessimistic otherwise &traffic_model=best_guess
 
         val deptTime = "&departure_time=$departureTime"
+        Log.i("dept time", "departure time is : ${deptTime}")
         // set transportation mode
         val mode = "&mode=driving"
         val strApiKey = "&key=" + BuildConfig.MAPS_API_KEY
@@ -226,6 +246,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         val parameters = "$origin$dest$deptTime$mode"
         // build url
         FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
+        Log.i("e", "after fetch url")
     }
 
     @SuppressLint("MissingPermission")
@@ -387,6 +408,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
 //        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
+        Log.i("jimbo", "the size is ${values.size}")
+        if(values.size > 1){
+            Log.i("jimbo", "values: ${values[1]}")
+            polyline2 = map.addPolyline(values[1] as PolylineOptions)
+        }
+
+
     }
 
     fun makeWeatherVisible(view : View){
@@ -407,6 +435,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }else if (binding.planLayout.visibility == View.INVISIBLE){
             binding.planLayout.visibility = View.VISIBLE
             binding.weather.visibility = View.INVISIBLE
+            OnClickTime()
             binding.directionsLayout.visibility = View.INVISIBLE
 
         }
@@ -606,5 +635,46 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun OnClickTime() {
 
+        binding.timePicker.setOnTimeChangedListener { _, hour, minute -> var hour = hour
+            var am_pm = ""
+            // AM_PM decider logic
+            when {hour == 0 -> { hour += 12
+                am_pm = "AM"
+            }
+                hour == 12 -> am_pm = "PM"
+                hour > 12 -> { hour -= 12
+                    am_pm = "PM"
+                }
+                else -> am_pm = "AM"
+            }
+
+            val h = if (hour < 10) "0$hour" else hour
+            val min = if (minute < 10) "0$minute" else minute
+            // display format of time
+            val msg = "$h : $min $am_pm"
+            binding.showTime.text = msg
+            binding.showTime.visibility = ViewGroup.VISIBLE
+            binding.showTime.visibility = ViewGroup.VISIBLE
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+
+            val simpleDateFormat = SimpleDateFormat("yyyy-MMM-dd HH:mm:ss")
+            simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val localDateFormat = SimpleDateFormat("yyyy-MMM-dd HH:mm:ss")
+            val unix = localDateFormat.parse(simpleDateFormat.format(Date()))
+
+
+            unix.hours = hour
+            if(am_pm == "PM"){
+                unix.hours += 12
+            }
+            Log.i("e", "hour is : ${unix.hours}")
+
+            unix.minutes = minute
+            Log.i("e", "gmt: ${unix.time}")
+            departureTime = unix.time
+        }
+    }
 }
