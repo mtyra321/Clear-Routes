@@ -21,6 +21,7 @@
     <!--    </androidx.constraintlayout.widget.ConstraintLayout>-->
 
     <Button
+        android:id="@+id/planBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
@@ -128,29 +129,52 @@
             app:layout_constraintTop_toBottomOf="@+id/tabLayout" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+
+
+
+
+
+
+
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/plan_layout"
         android:layout_width="411dp"
         android:layout_height="673dp"
         android:layout_marginBottom="57dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         android:visibility="invisible">
 
         <ScrollView
-
+            android:id="@+id/scroll"
             android:layout_width="409dp"
-            android:layout_height="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="1dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0">
 
             <LinearLayout
                 android:id="@+id/stops"
                 android:layout_width="409dp"
-                android:layout_height="200dp"
+                android:layout_height="300dp"
                 android:layout_marginStart="1dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginEnd="1dp"
                 android:layout_marginBottom="1dp"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                app:layout_constraintBottom_toTopOf="@+id/button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
             </LinearLayout>
         </ScrollView>
@@ -172,5 +196,42 @@
             app:layout_constraintStart_toStartOf="@+id/addLineBtn"
             app:layout_constraintTop_toBottomOf="@+id/addLineBtn"
             app:layout_constraintVertical_bias="0.0"/>
+
+        <TextView
+            android:id="@+id/show_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="64dp"
+            android:layout_marginTop="420dp"
+            android:padding="20dp"
+            android:textSize="35dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TimePicker
+            android:id="@+id/timePicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="276dp"
+            android:visibility="invisible"
+            android:padding="20dp"
+            android:timePickerMode="spinner"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        <Button
+            android:id="@+id/button_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="260dp"
+            android:layout_marginTop="148dp"
+            android:text="Change Time"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/scroll" />
+
+
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </fragment>
