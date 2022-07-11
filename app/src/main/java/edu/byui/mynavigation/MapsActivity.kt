@@ -26,10 +26,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.Polyline
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.tabs.TabLayout
 import edu.byui.mynavigation.databinding.ActivityMapsBinding
 import java.io.IOException
@@ -45,17 +42,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 //    , GoogleMap.OnCameraMoveListener, GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnCameraIdleListener {
 
     private lateinit var map: GoogleMap
+    private lateinit var geocoder: Geocoder
+//    private var pp = PointsParser()
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var lastLocation: Location
     private lateinit var locationCallback: LocationCallback
     private lateinit var locationRequest: LocationRequest
     private var locationUpdateState = false
-//    private lateinit var currentAddress: TextView
-    private var destinationLat = 0.0
-    private var destinationLng = 0.0
-    private var origin:  MarkerOptions? = null
-    private var destination: MarkerOptions? = null
     private var originLoc = ""
     private var destinationLoc = ""
     private var originLat = 0.0
@@ -65,19 +59,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     // sets the departureTime to the current time
     private var departureTime = LocalDateTime.now(ZoneOffset.UTC).atZone(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
-    //if R.something doesn't work, remove the .R import
     private var numberOfLines by Delegates.notNull<Int>()
     private var destinationList = ArrayList<String>()
     private var coords : MutableList<LatLng>? = mutableListOf( LatLng(-22.82,22.20), LatLng(-33.82,33.79), LatLng(-44.82,44.79))
     var adapter = TabAdapter(supportFragmentManager)
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
     private val sdf = SimpleDateFormat("hh:mm")
-
-
-//    var dataParser = DataParser()
-//    private var distances = legDistances
-//    private var stringEndPoints: List<String> = listOf("Rexburg", "Lincoln")
-//    private var latLngEndPoints: List<LatLng> = listOf<LatLng>((43.826,-111.789),(40.813,-96.707))
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -133,46 +120,61 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         createLocationRequest()
     }
 
-//    private fun searchArea() {
-//        val tfOriginLocation = findViewById<EditText>(R.id.et_name)
-//        val originLocation = tfOriginLocation.text.toString().replace(" ","")
-//
-//        var dept_time = 1657877400
-//        var dest = "Kansas City, KS"
-//        var destList = mutableListOf<String>("Omaha, NE", "Nebraska City, NE", "Auburn, NE") // build from form data
-//        val defaultOrigin = originLocation //LatLng(43.81418,-111.783066)
-////        val defaultDestination = LatLng(43.810898,-111.77808)
-////        if ((origin!!.position == null) or (destination!!.position == null))
-//        FetchURL(this@MapsActivity).execute(getDirectionsUrl(defaultOrigin, dest, destList, dept_time))
-//
-//        // FetchURL(this@MapsActivity).execute(getDirectionsUrl(origin?.position ?: defaultOrigin,
-//        //            destination?.position ?: defaultDestination
-//        //        ))
-//
-//    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-//        currentAddress = findViewById(R.id.tvAdd)
+        geocoder = Geocoder(this)
         setUpMap()
     }
+
+
+    private fun getLocCoords(locStrings: ArrayList<String>): ArrayList<LatLng> {
+        // accepts a list of string locations, returns a list of LatLng values
+        var locDetail: MutableList<Address>?
+        var locLatLngs: ArrayList<LatLng> = ArrayList<LatLng>()
+//        var geocoder = Geocoder(applicationContext)
+
+        for (p in locStrings) {
+            locDetail = geocoder.getFromLocationName(p,1)
+            var coord_lat = locDetail[0].latitude
+            var coord_lng = locDetail[0].longitude
+            var coords = LatLng(coord_lat,coord_lng)
+            locLatLngs.add(coords)
+        }
+        return locLatLngs
+    }
+
+//    private fun originDestMarkers() {
+//        pp.points[0]?.let { placeMarkerOnMap(it) }
+//        pp.points.last()?.let { placeMarkerOnMap(it) }
+//    }
+//    private fun placeMarkerAtString(locString: String): LatLng {
+//        // accepts a list of string locations, returns a list of LatLng values
+//        var locDetail: MutableList<Address>?
+//
+//        locDetail = geocoder.getFromLocationName(locString,1)
+//        var coord_lat = locDetail[0].latitude
+//        var coord_lng = locDetail[0].longitude
+//        var coord = LatLng(coord_lat,coord_lng)
+//        placeMarkerOnMap(coord)
+//        return coord
+//    }
 
     private fun parseDestinationList() {
         var waypointStr = ""
         var urlDestStr = ""
 //        var addressList= ArrayList<Address>()
         originLoc = (destinationList[0]).replace(" ","")
+//        val originCoords = placeMarkerAtString(originLoc)
         destinationList.removeAt(0)
         destinationLoc = (destinationList.last()).replace(" ","")
+//        placeMarkerAtString(destinationLoc)
         destinationList.removeLast()
         val urlOriginLocStr = "origin=$originLoc"
         var destStr = "&destination=$destinationLoc"
         if (destinationList.size > 0) {
             for (w in destinationList) {
                 if (w != "") {
-//                    val geocoder = Geocoder(applicationContext)
-//                    val address = geocoder.getFromLocationName(w,1)
-//                    addressList.add(address)
                     var wPoint = w.replace(" ", "")
                     waypointStr = if (waypointStr == "") {
                         "&waypoints=$wPoint"
@@ -183,55 +185,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             }
             urlDestStr = destStr + waypointStr
         } else {
-            urlDestStr = "&alternatives=true$destStr"
+            urlDestStr = destStr
+//            urlDestStr = "&alternatives=true$destStr"
         }
         getDirections(urlOriginLocStr,urlDestStr)
+//        map.animateCamera(CameraUpdateFactory.newLatLngZoom(originCoords, 8f))
+
     }
-
-
-//    private fun parseDestinations(destination: String,waypointList: MutableList<String>): String {
-////        var addressList: List<Address>? = null
-//        var dest = destination.replace(" ","")
-//        var destStr = "&destination=$dest"
-//        var waypointStr = ""
-//        var urlDestStr = ""
-//
-//        if (waypointList.size > 0) {
-//            for (w in waypointList) {
-//                if (w != "") {
-//                    var wPoint = w.replace(" ", "")
-//                    waypointStr = if (waypointStr == "") {
-//                        "&waypoints=$wPoint"
-//                    } else {
-//                        "$waypointStr|$wPoint"
-//                    }
-//                }
-//            }
-//            urlDestStr = destStr + waypointStr
-//            } else {
-//                urlDestStr = "&alternatives=true$destStr"
-//            }
-//        return urlDestStr
-//    }
-
-//        for (d in waypointList) {
-//            if (d != "") {
-//                var wPoint = d.replace(" ", "")
-//                // more than one destination = waypoints
-//                waypointStr = if (waypointList.size > 1) {
-//                    if (waypointStr == "") {
-//                        "&waypoints=$wPoint"
-//                    } else {
-//                        "$waypointStr|$wPoint"
-//                    }
-//                    // only one destination = destination and set alternatives to true (can only use alternatives if no waypoints)
-//                } else {
-//                    "&alternatives=true&destination=$wPoint"
-//                }
-//            }
-//        }
-//        val urlDestStr = destStr + waypointStr
-
 
     // call this function when form is submitted w/ trip info
     private fun getDirections(origin: String, dest: String) {
@@ -245,8 +205,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         // parameter string
         val parameters = "$origin$dest$deptTime$mode"
         // build url
-        FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
-        Log.i("e", "after fetch url")
+        var fetch = FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
     }
 
     @SuppressLint("MissingPermission")
@@ -283,8 +242,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
     }
 
-    // use this tutorial, step 6 to help convert to passing in a list for multiple markers
-    // https://developers.google.com/codelabs/maps-platform/maps-platform-101-android#5
     private fun placeMarkerOnMap(location: LatLng) {
         val titleStr = getAddress(location)
         val markerOptions = MarkerOptions().position(location).title(titleStr)
@@ -408,13 +365,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
 //        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
-        Log.i("jimbo", "the size is ${values.size}")
-        if(values.size > 1){
-            Log.i("jimbo", "values: ${values[1]}")
-            polyline2 = map.addPolyline(values[1] as PolylineOptions)
-        }
-
-
+        val linePoints = currentPolyline!!.points
+        placeMarkerOnMap(linePoints[0])
+        placeMarkerOnMap(linePoints.last())
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
+//        addSingleTab(linePoints) // list of LatLng values
     }
 
     fun makeWeatherVisible(view : View){
@@ -433,6 +388,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             binding.planLayout.visibility = View.INVISIBLE
 
         }else if (binding.planLayout.visibility == View.INVISIBLE){
+            map.clear()
             binding.planLayout.visibility = View.VISIBLE
             binding.weather.visibility = View.INVISIBLE
             OnClickTime()
