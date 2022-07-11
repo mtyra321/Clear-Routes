@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/matt/AndroidStudioProjects/Clear-Routes/app/src/main/res/layout/activity_maps.xml" value="0.17831813576494426" />
+        <entry key="..\:/Users/matt/AndroidStudioProjects/Clear-Routes/app/src/main/res/layout/custom_info_contents.xml" value="0.17831813576494426" />
+        <entry key="..\:/Users/matt/AndroidStudioProjects/Clear-Routes/app/src/main/res/layout/row_add_language.xml" value="0.17831813576494426" />
+        <entry key="..\:/Users/matt/AndroidStudioProjects/Clear-Routes/app/src/main/res/layout/weather_lv_item.xml" value="0.17831813576494426" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
