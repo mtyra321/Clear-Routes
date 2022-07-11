@@ -41,7 +41,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     private lateinit var map: GoogleMap
     private lateinit var geocoder: Geocoder
-
+//    private var pp = PointsParser()
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var lastLocation: Location
@@ -125,27 +125,31 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         return locLatLngs
     }
 
-    private fun placeMarkerAtString(locString: String): LatLng {
-        // accepts a list of string locations, returns a list of LatLng values
-        var locDetail: MutableList<Address>?
-
-        locDetail = geocoder.getFromLocationName(locString,1)
-        var coord_lat = locDetail[0].latitude
-        var coord_lng = locDetail[0].longitude
-        var coord = LatLng(coord_lat,coord_lng)
-        placeMarkerOnMap(coord)
-        return coord
-    }
+//    private fun originDestMarkers() {
+//        pp.points[0]?.let { placeMarkerOnMap(it) }
+//        pp.points.last()?.let { placeMarkerOnMap(it) }
+//    }
+//    private fun placeMarkerAtString(locString: String): LatLng {
+//        // accepts a list of string locations, returns a list of LatLng values
+//        var locDetail: MutableList<Address>?
+//
+//        locDetail = geocoder.getFromLocationName(locString,1)
+//        var coord_lat = locDetail[0].latitude
+//        var coord_lng = locDetail[0].longitude
+//        var coord = LatLng(coord_lat,coord_lng)
+//        placeMarkerOnMap(coord)
+//        return coord
+//    }
 
     private fun parseDestinationList() {
         var waypointStr = ""
         var urlDestStr = ""
 //        var addressList= ArrayList<Address>()
         originLoc = (destinationList[0]).replace(" ","")
-        val originCoords = placeMarkerAtString(originLoc)
+//        val originCoords = placeMarkerAtString(originLoc)
         destinationList.removeAt(0)
         destinationLoc = (destinationList.last()).replace(" ","")
-        placeMarkerAtString(destinationLoc)
+//        placeMarkerAtString(destinationLoc)
         destinationList.removeLast()
         val urlOriginLocStr = "origin=$originLoc"
         var destStr = "&destination=$destinationLoc"
@@ -162,10 +166,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             }
             urlDestStr = destStr + waypointStr
         } else {
-            urlDestStr = "&alternatives=true$destStr"
+            urlDestStr = destStr
+//            urlDestStr = "&alternatives=true$destStr"
         }
         getDirections(urlOriginLocStr,urlDestStr)
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(originCoords, 8f))
+//        map.animateCamera(CameraUpdateFactory.newLatLngZoom(originCoords, 8f))
 
     }
 
@@ -180,7 +185,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         // parameter string
         val parameters = "$origin$dest$deptTime$mode"
         // build url
-        FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
+        var fetch = FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
     }
 
     @SuppressLint("MissingPermission")
@@ -337,10 +342,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     override fun onTaskDone(vararg values: Any?) {
         if (currentPolyline != null) {
             currentPolyline!!.remove()
-
         }
 //        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
+        val linePoints = currentPolyline!!.points
+        placeMarkerOnMap(linePoints[0])
+        placeMarkerOnMap(linePoints.last())
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
+//        addSingleTab(linePoints) // list of LatLng values
     }
 
     fun makeWeatherVisible(view : View){
