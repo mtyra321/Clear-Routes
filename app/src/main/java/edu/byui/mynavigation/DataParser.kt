@@ -18,7 +18,7 @@ class DataParser {
 //    val legDurations: MutableList<Int> = ArrayList() // in seconds
 //    val legDistances: MutableList<Int> = ArrayList() // in meters
 //    val legEndLocs: MutableList<JSONObject> = ArrayList() // [{lat: val, lng: val},{lat: val,lng: val}]
-//    val instructions: MutableList<String> = ArrayList() // ["turn left","turn right", "merge",...]
+    var instructions: MutableList<String> = ArrayList() // ["turn left","turn right", "merge",...]
     fun parse(jObject: JSONObject): MutableList<List<HashMap<String, String>>> {
         val routes: MutableList<List<HashMap<String, String>>> = ArrayList()
         val jRoutes: JSONArray
@@ -45,8 +45,8 @@ class DataParser {
                     /** Traversing all steps  */
                     for (k in 0 until jSteps.length()) {
                         /** Put instruction steps into an array */
-//                        var instruct = (jSteps[k] as JSONObject)["html_instructions"] as String
-//                        instructions.add(instruct)
+                        var instruct = (jSteps[k] as JSONObject)["html_instructions"] as String
+                        instructions.add(instruct)
                         var polyline = ""
                         polyline =
                             ((jSteps[k] as JSONObject)["polyline"] as JSONObject)["points"] as String

@@ -1,6 +1,7 @@
 package edu.byui.mynavigation
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -114,7 +115,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                 super.onLocationResult(p0)
 
                 lastLocation = p0.lastLocation!!
-              //  addSingleTab(lastLocation.latitude, lastLocation.longitude)
                 placeMarkerOnMap(LatLng(lastLocation.latitude, lastLocation.longitude))
             }
         }
@@ -373,11 +373,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
 //        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
+        Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
         placeMarkerOnMap(linePoints[0])
         placeMarkerOnMap(linePoints.last())
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
-//        addSingleTab(linePoints) // list of LatLng values
     }
 
     fun makeWeatherVisible(view : View){
@@ -537,6 +537,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         (view.getParent() as ViewManager).removeView(view)
     }
 
+    fun getDirectionText() {
+        val instructions = DataParser().instructions
+        Log.d("instruct","Instructions: $instructions")
+        for (i in instructions) {
+            add_direction_Line(i)
+        }
+//        for(i in directionList){
+//            add_direction_Line(i)
+//        }
+
+    }
+
     private fun saveData() {
         destinationList.clear()
         // this counts the no of child layout
@@ -570,9 +582,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         setupTabLayout()
         setupViewPager()
         hideKeybord()
-        for(i in directionList){
-            add_direction_Line(i)
-        }
+        getDirectionText()
+
+        //relocate map
+       // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
 
 
 
