@@ -21,6 +21,10 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -44,7 +48,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     private lateinit var map: GoogleMap
     private lateinit var geocoder: Geocoder
-//    private var pp = PointsParser()
+    private var theRequestQueue: RequestQueue? = null
+
+    //    private var pp = PointsParser()
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var lastLocation: Location
@@ -66,6 +72,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     var adapter = TabAdapter(supportFragmentManager)
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
     private val sdf = SimpleDateFormat("hh:mm")
+    private val baseUrl = "https://api.openweathermap.org/data/2.5/"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +80,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        theRequestQueue = Volley.newRequestQueue(this)
 
         //setContentView(R.layout.activity_maps)
         setContentView(binding.root)
@@ -181,8 +189,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var destStr = "&destination=$destinationLoc"
         if (destinationList.size > 1) {
             for (w in destinationList) {
-                Log.i("jimbo", "destination: ${w}")
-                if (w != "") {
+                Log.i("jeremy", "destination: ${w}")
+                if (w != "current location") {
                     var wPoint = w.replace(" ", "")
                     waypointStr = if (waypointStr == "") {
                         "&waypoints=$wPoint"
@@ -214,6 +222,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         val parameters = "$origin$dest$deptTime$mode"
         // build url
         var fetch = FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
+        Log.i("jimbo", "fetching: ${fetch.toString()}")
     }
 
     @SuppressLint("MissingPermission")
@@ -253,6 +262,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private fun placeMarkerOnMap(location: LatLng) {
         val titleStr = getAddress(location)
         val markerOptions = MarkerOptions().position(location).title(titleStr)
+        map.addMarker(markerOptions)
+
+    }
+
+    private fun placeCustomMarkerOnMap(location: LatLng, iconId: Int) {
+        val titleStr = getAddress(location)
+        val markerOptions = MarkerOptions().position(location).title(titleStr).icon(BitmapDescriptorFactory.fromResource(iconId))
         map.addMarker(markerOptions)
 
     }
@@ -367,6 +383,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
     }
 
+    // TODO: this is where the line points are drawn
     override fun onTaskDone(vararg values: Any?) {
         if (currentPolyline != null) {
             currentPolyline!!.remove()
@@ -376,8 +393,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
         placeMarkerOnMap(linePoints[0])
+        //val iconId = getWeatherRouteIcon(linePoints[linePoints.size/2])
+        val iconId = R.drawable.icon01d
+        placeCustomMarkerOnMap(linePoints[(linePoints.size*.75).toInt()], iconId)
+        placeCustomMarkerOnMap(linePoints[(linePoints.size*.50).toInt()], iconId)
+
+        placeCustomMarkerOnMap(linePoints[(linePoints.size*.25).toInt()], iconId)
         placeMarkerOnMap(linePoints.last())
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
+        for( i in destinationList.indices){
+            Log.i("jeremy", "destinations: ${destinationList[i]}")
+        }
     }
 
     fun makeWeatherVisible(view : View){
@@ -430,7 +456,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             val i = coords.size.minus(1)
             binding.tabLayout.apply {
 
-                var mFragment = WeatherFragment(coords!![i!!], "city $i")
+                val mFragment = WeatherFragment(coords[i], "city $i")
                 val mBundle = Bundle()
                 mBundle.putString("mText", "e")
                 mFragment.arguments = mBundle
@@ -450,10 +476,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                     override fun onTabReselected(tab: TabLayout.Tab?) {
                     }
                 })
-                for (i in 0 until binding.tabLayout.tabCount) {
-                   // (binding.tabLayout.getTabAt(i)?.view as LinearLayout).visibility = View.GONE
 
-                }
             }
 
         setupViewPager()
@@ -655,4 +678,69 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             departureTime = unix.time
         }
     }
+    fun getWeatherRouteIcon(coord: LatLng){
+        val weatherUrl = baseUrl + "lat=${coord.latitude}&lon=${coord.longitude}&units=imperial&appid=${BuildConfig.WEATHER_API_KEY}"
+        var icon = 0
+
+        // Request a string response from the provided URL.
+        val request = JsonObjectRequest(
+            Request.Method.GET, weatherUrl, null,
+            { response ->
+                val jsonDailyArray = response.getJSONArray("daily")
+                for (i in 0 until  jsonDailyArray.length()) {
+
+                    val iconId = "icon" +jsonDailyArray.getJSONObject(i).getJSONArray("weather").getJSONObject(0).getString("icon")
+                    if(iconId == "icon01d"){
+                        icon = R.drawable.icon01d
+                    } else if(iconId == "icon01n"){
+                        icon = R.drawable.icon01n
+                    } else if(iconId == "icon02d"){
+                        icon = R.drawable.icon02d
+                    } else if(iconId == "icon02n"){
+                        icon = R.drawable.icon02n
+                    } else if(iconId == "icon03d"){
+                        icon = R.drawable.icon03d
+                    } else if(iconId == "icon03n"){
+                        icon = R.drawable.icon03n
+                    } else if(iconId == "icon04d"){
+                        icon = R.drawable.icon04d
+                    } else if(iconId == "icon04n"){
+                        icon = R.drawable.icon04n
+                    } else if(iconId == "icon09d"){
+                        icon = R.drawable.icon09d
+                    } else if(iconId == "icon09n"){
+                        icon = R.drawable.icon09n
+                    } else if(iconId == "icon10d"){
+                        icon = R.drawable.icon10d
+                    } else if(iconId == "icon10n"){
+                        icon = R.drawable.icon10n
+                    } else if(iconId == "icon11d"){
+                        icon = R.drawable.icon11d
+                    } else if(iconId == "icon11n"){
+                        icon = R.drawable.icon11n
+                    } else if(iconId == "icon13d"){
+                        icon = R.drawable.icon13d
+                    } else if(iconId == "icon13n"){
+                        icon = R.drawable.icon13n
+                    } else if(iconId == "icon50d"){
+                        icon = R.drawable.icon50d
+                    } else if(iconId == "icon50n"){
+                        icon = R.drawable.icon50n
+                    }
+
+                }
+
+            },
+            { _ ->
+                //println("Oops! $error")
+            }
+        )
+        theRequestQueue?.add(request) ?: println("Opps! Couldn't create a queue.")
+
+        Log.i("jeremy", "icon is : ${icon}")
+
+    }
+
+
+
 }

@@ -15,16 +15,12 @@ import edu.byui.mynavigation.databinding.WeatherFragmentBinding
 
 class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
 
-
     private lateinit var binding: WeatherFragmentBinding
-    private lateinit var args :String
     private var weatherDisplayAdapter: WeatherDisplayAdapter? = null
-    private var imageModelArrayList: ArrayList<ImageModel>? = null
 
     private var theRequestQueue: RequestQueue? = null
     var label: TextView? = null
     var cityNameLabel: TextView? = null
-    private var currentTempUnit: String? = null
     private val lat = coords.latitude
     private val lon = coords.longitude
     private val cityName = cityName
@@ -32,8 +28,6 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
     private val apiKey = BuildConfig.WEATHER_API_KEY
     private val oneCallUrl = "https://api.openweathermap.org/data/3.0/onecall?"
     private lateinit var  listItems: ArrayList<DailyForecast>
-    private var imageView: ImageView? = null
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,9 +43,7 @@ class WeatherFragment(coords: LatLng, cityName: String) : Fragment(){
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupData()
-
         theRequestQueue = Volley.newRequestQueue(view.context)
         getDailyResult()
 
