@@ -1,7 +1,6 @@
 package edu.byui.mynavigation
 
 import android.annotation.SuppressLint
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -10,6 +9,7 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
+
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -39,7 +39,6 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.properties.Delegates
 
 
@@ -72,7 +71,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     var adapter = TabAdapter(supportFragmentManager)
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
     private val sdf = SimpleDateFormat("hh:mm")
-    private val baseUrl = "https://api.openweathermap.org/data/2.5/"
+    private val baseUrl = "https://api.openweathermap.org/data/2.5/weather?"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -393,18 +392,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
         placeMarkerOnMap(linePoints[0])
-        //val iconId = getWeatherRouteIcon(linePoints[linePoints.size/2])
-        val iconId = R.drawable.icon01d
-        placeCustomMarkerOnMap(linePoints[(linePoints.size*.75).toInt()], iconId)
-        placeCustomMarkerOnMap(linePoints[(linePoints.size*.50).toInt()], iconId)
-
-        placeCustomMarkerOnMap(linePoints[(linePoints.size*.25).toInt()], iconId)
         placeMarkerOnMap(linePoints.last())
+        createIconMapMarkers(linePoints)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(linePoints[0], 8f))
-        for( i in destinationList.indices){
-            Log.i("jeremy", "destinations: ${destinationList[i]}")
-        }
     }
+
+     fun createIconMapMarkers(linePoints: MutableList<LatLng>) {
+
+        getWeatherRouteIcon(linePoints[(linePoints.size*.75).toInt()])
+        getWeatherRouteIcon(linePoints[(linePoints.size*.50).toInt()])
+        getWeatherRouteIcon(linePoints[(linePoints.size*.25).toInt()])
+}
 
     fun makeWeatherVisible(view : View){
         if(binding.weather.visibility == View.VISIBLE){
@@ -450,37 +448,37 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     }
 
-    private fun addSingleTab(lat: Double, long: Double){
-        Log.i("jimbo", "adding single tab")
-            coords.add(LatLng(lat, long))
-            val i = coords.size.minus(1)
-            binding.tabLayout.apply {
-
-                val mFragment = WeatherFragment(coords[i], "city $i")
-                val mBundle = Bundle()
-                mBundle.putString("mText", "e")
-                mFragment.arguments = mBundle
-                adapter.addFrag(mFragment, "arguments $coords[i]")
-                addTab(this.newTab().setText("current location"))
-
-                addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-                    override fun onTabSelected(tab: TabLayout.Tab?) {
-                        tab?.position?.let {
-                            binding.viewPager.currentItem = it
-                        }
-                    }
-
-                    override fun onTabUnselected(tab: TabLayout.Tab?) {
-                    }
-
-                    override fun onTabReselected(tab: TabLayout.Tab?) {
-                    }
-                })
-
-            }
-
-        setupViewPager()
-    }
+//    private fun addSingleTab(lat: Double, long: Double){
+//        Log.i("jimbo", "adding single tab")
+//            coords.add(LatLng(lat, long))
+//            val i = coords.size.minus(1)
+//            binding.tabLayout.apply {
+//
+//                val mFragment = WeatherFragment(coords[i], "city $i")
+//                val mBundle = Bundle()
+//                mBundle.putString("mText", "e")
+//                mFragment.arguments = mBundle
+//                adapter.addFrag(mFragment, "arguments $coords[i]")
+//                addTab(this.newTab().setText("current location"))
+//
+//                addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+//                    override fun onTabSelected(tab: TabLayout.Tab?) {
+//                        tab?.position?.let {
+//                            binding.viewPager.currentItem = it
+//                        }
+//                    }
+//
+//                    override fun onTabUnselected(tab: TabLayout.Tab?) {
+//                    }
+//
+//                    override fun onTabReselected(tab: TabLayout.Tab?) {
+//                    }
+//                })
+//
+//            }
+//
+//        setupViewPager()
+//    }
 
     private fun setupTabLayout() {
 
@@ -683,13 +681,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var icon = 0
 
         // Request a string response from the provided URL.
+        Log.i("jimbo", "in get weather route icon, before request")
         val request = JsonObjectRequest(
             Request.Method.GET, weatherUrl, null,
             { response ->
-                val jsonDailyArray = response.getJSONArray("daily")
+                val jsonDailyArray = response.getJSONArray("weather")
                 for (i in 0 until  jsonDailyArray.length()) {
 
-                    val iconId = "icon" +jsonDailyArray.getJSONObject(i).getJSONArray("weather").getJSONObject(0).getString("icon")
+                    val iconId = "icon" +jsonDailyArray.getJSONObject(0).getString("icon")
                     if(iconId == "icon01d"){
                         icon = R.drawable.icon01d
                     } else if(iconId == "icon01n"){
@@ -728,7 +727,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                         icon = R.drawable.icon50n
                     }
 
-                }
+                    placeCustomMarkerOnMap(coord, icon)
+
+                   }
 
             },
             { _ ->
@@ -736,11 +737,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             }
         )
         theRequestQueue?.add(request) ?: println("Opps! Couldn't create a queue.")
-
-        Log.i("jeremy", "icon is : ${icon}")
-
     }
-
-
-
 }
+
+
