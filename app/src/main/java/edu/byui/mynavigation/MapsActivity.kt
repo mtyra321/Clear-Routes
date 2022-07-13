@@ -9,8 +9,8 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
-
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
@@ -34,6 +34,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.material.tabs.TabLayout
 import edu.byui.mynavigation.databinding.ActivityMapsBinding
+import org.json.JSONObject
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -72,7 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private  var directionList: MutableList<String> = mutableListOf<String>("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")
     private val sdf = SimpleDateFormat("hh:mm")
     private val baseUrl = "https://api.openweathermap.org/data/2.5/weather?"
-
+    private var totalTimeOfTrip = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -221,7 +222,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         val parameters = "$origin$dest$deptTime$mode"
         // build url
         var fetch = FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
-        Log.i("jimbo", "fetching: ${fetch.toString()}")
+        Log.d("mylog", "fetching: ${fetch.get()}")
+
+        val j = JSONObject(fetch.get())
+        Log.i("whatever", "j is : ${(j.getJSONArray("routes")[0] as JSONObject ).getJSONArray("legs")}")
+        var legs = (j.getJSONArray("routes")[0] as JSONObject ).getJSONArray("legs")
+        for(i in 0 until legs.length()) {
+            var steps = legs.getJSONObject(i).getJSONArray("steps")
+            var legTime = legs.getJSONObject(i).getJSONObject("duration").getInt("value")
+            totalTimeOfTrip += legTime
+            Log.i("whatever", "legTime is: ${legTime}")
+            Log.i("whatever", "Steps is: ${steps}")
+            for (j in 0 until steps.length()) {
+                var stepInstructions = steps.getJSONObject(j).getString("html_instructions")
+                Log.i("whatever", "step instructions: ${stepInstructions}")
+
+
+
+
+
+
+
+                add_direction_Line(html2text(stepInstructions))
+            }
+        }
+        var hours = totalTimeOfTrip / 3600
+        var minutes = (totalTimeOfTrip % 3600) / 60
+        var timeString = String.format("%02d: hours and %02d minutes", hours, minutes)
+
+        Log.i("whatever", "Your trip will take ${timeString} ")
     }
 
     @SuppressLint("MissingPermission")
@@ -558,17 +587,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         (view.getParent() as ViewManager).removeView(view)
     }
 
-    fun getDirectionText() {
-        val instructions = DataParser().instructions
-        Log.d("instruct","Instructions: $instructions")
-        for (i in instructions) {
-            add_direction_Line(i)
-        }
-//        for(i in directionList){
-//            add_direction_Line(i)
-//        }
-
-    }
 
     private fun saveData() {
         destinationList.clear()
@@ -603,7 +621,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         setupTabLayout()
         setupViewPager()
         hideKeybord()
-        getDirectionText()
 
         //relocate map
        // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
@@ -616,6 +633,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         val directionView = TextView(this)
 
         directionView.text = direction
+        directionView.setTextColor(resources.getColor( R.color.white))
+        directionView.setTextSize(20F)
+        //directionView.setbo
         binding.directions.addView(directionView, binding.directions.childCount)
 
         numberOfLines++
@@ -738,6 +758,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         )
         theRequestQueue?.add(request) ?: println("Opps! Couldn't create a queue.")
     }
+    fun html2text(html: String): String {
+        return Html.fromHtml(html).toString()
+
+    }
+
+
+
 }
 
 

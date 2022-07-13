@@ -61,9 +61,6 @@
         android:visibility="invisible"
         android:layout_marginBottom="57dp"
         >
-
-
-
         <ScrollView
 
             android:layout_width="409dp"
