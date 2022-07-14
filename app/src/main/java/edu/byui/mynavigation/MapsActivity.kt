@@ -29,6 +29,7 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
@@ -62,7 +63,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private var originLat = 0.0
     private var originLong = 0.0
     private var currentPolyline: Polyline? = null
-    private var polyline2: Polyline? = null
 
     // sets the departureTime to the current time
     private var departureTime = LocalDateTime.now(ZoneOffset.UTC).atZone(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
@@ -74,7 +74,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     private val sdf = SimpleDateFormat("hh:mm")
     private val baseUrl = "https://api.openweathermap.org/data/2.5/weather?"
     private var totalTimeOfTrip = 0
+    private  var unix: Date = Date()
 
+    private var depart: Pair<Int, Int> = Pair(unix.hours,unix.minutes)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -96,18 +98,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
         binding.buttonDate.setOnClickListener{
             if(binding.timePicker.visibility == View.VISIBLE){
-                //   OnClickTime()
-//                binding.showTime.text = time
-                binding.showTime.visibility = View.VISIBLE
+           //     binding.showTime.visibility = View.VISIBLE
                 binding.timePicker.visibility = View.INVISIBLE
 
 
             }else if (binding.timePicker.visibility == View.INVISIBLE){
-                binding.showTime.visibility = View.INVISIBLE
+           //     binding.showTime.visibility = View.INVISIBLE
                 binding.timePicker.visibility = View.VISIBLE
 
             }
-
         }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -141,19 +140,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         // accepts a list of string locations, returns a list of LatLng values
         var locDetail: MutableList<Address>?
         var locLatLngs: ArrayList<LatLng> = ArrayList<LatLng>()
-//        var geocoder = Geocoder(applicationContext)
-        Log.i("jimbo", "in loc coords")
         destinationList.add(0 , "current location")
         locLatLngs.add(0, LatLng(lastLocation.latitude, lastLocation.longitude))
         for (p in locStrings) {
             if(p != "current location") {
                 locDetail = geocoder.getFromLocationName(p, 1)
-                Log.i("jimbo", "locdetail: ${locDetail} in p ${p}")
                 val coord_lat = locDetail[0].latitude
                 val coord_lng = locDetail[0].longitude
                 val coords = LatLng(coord_lat, coord_lng)
                 locLatLngs.add(coords)
-                Log.i("jimbo", "adding coord ${coords}")
             }
         }
         return locLatLngs
@@ -189,7 +184,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var destStr = "&destination=$destinationLoc"
         if (destinationList.size > 1) {
             for (w in destinationList) {
-                Log.i("jeremy", "destination: ${w}")
                 if (w != "current location") {
                     var wPoint = w.replace(" ", "")
                     waypointStr = if (waypointStr == "") {
@@ -212,9 +206,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     // call this function when form is submitted w/ trip info
     private fun getDirections(origin: String, dest: String) {
         // if bad weather => &traffic_model=pessimistic otherwise &traffic_model=best_guess
-
+        totalTimeOfTrip = 0
         val deptTime = "&departure_time=$departureTime"
-        Log.i("dept time", "departure time is : ${deptTime}")
         // set transportation mode
         val mode = "&mode=driving"
         val strApiKey = "&key=" + BuildConfig.MAPS_API_KEY
@@ -222,35 +215,54 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         val parameters = "$origin$dest$deptTime$mode"
         // build url
         var fetch = FetchURL(this@MapsActivity).execute("https://maps.googleapis.com/maps/api/directions/json?$parameters$strApiKey")
-        Log.d("mylog", "fetching: ${fetch.get()}")
 
         val j = JSONObject(fetch.get())
-        Log.i("whatever", "j is : ${(j.getJSONArray("routes")[0] as JSONObject ).getJSONArray("legs")}")
         var legs = (j.getJSONArray("routes")[0] as JSONObject ).getJSONArray("legs")
         for(i in 0 until legs.length()) {
             var steps = legs.getJSONObject(i).getJSONArray("steps")
             var legTime = legs.getJSONObject(i).getJSONObject("duration").getInt("value")
             totalTimeOfTrip += legTime
-            Log.i("whatever", "legTime is: ${legTime}")
-            Log.i("whatever", "Steps is: ${steps}")
             for (j in 0 until steps.length()) {
                 var stepInstructions = steps.getJSONObject(j).getString("html_instructions")
-                Log.i("whatever", "step instructions: ${stepInstructions}")
-
-
-
-
-
-
 
                 add_direction_Line(html2text(stepInstructions))
             }
         }
-        var hours = totalTimeOfTrip / 3600
-        var minutes = (totalTimeOfTrip % 3600) / 60
-        var timeString = String.format("%02d: hours and %02d minutes", hours, minutes)
+        var hoursLength = totalTimeOfTrip / 3600
+        var minutesLength = (totalTimeOfTrip % 3600) / 60
 
-        Log.i("whatever", "Your trip will take ${timeString} ")
+        var hours = depart.first + hoursLength
+        var minutes = depart.second + minutesLength
+        if(minutes >= 60){
+            minutes -= 60
+            hours ++
+        }
+        var arriveAmPm = "AM"
+        while (hours > 24) {
+            hours -= 24
+        }
+
+        if(hours  == 12){
+            arriveAmPm = "PM"
+        }
+        else if (hours > 12){
+
+            hours -=12
+            arriveAmPm = "PM"
+        }
+         binding.arriveTime.text = "Arrival Time: "+ String.format("%02d:%02d ${arriveAmPm}", hours, minutes)
+        var departAmPm = "AM"
+        var departHours = depart.first
+        var departMinutes = depart.second
+        if(departHours  == 12){
+            departAmPm = "PM"
+        }
+        else if (departHours > 12){
+            departHours -=12
+            departAmPm = "PM"
+        }
+        binding.departTime.text = "Departure Time: "+ String.format("%02d:%02d ${departAmPm}", departHours, departMinutes)
+
     }
 
     @SuppressLint("MissingPermission")
@@ -262,8 +274,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         ) {
             // enables my-location layer
             map.isMyLocationEnabled = true
-
-
             // gets most recent location available
             fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
                 // to be safe, ensure not null, move to user's location
@@ -289,9 +299,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     private fun placeMarkerOnMap(location: LatLng) {
         val titleStr = getAddress(location)
-        val markerOptions = MarkerOptions().position(location).title(titleStr)
-        map.addMarker(markerOptions)
-
+        val markerOptions = MarkerOptions().position(location).title(titleStr).snippet("Departure Time: ")
+        map.addMarker(markerOptions)?.showInfoWindow()
     }
 
     private fun placeCustomMarkerOnMap(location: LatLng, iconId: Int) {
@@ -396,7 +405,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             }
         }
     }
-
     //  stop location update request
     override fun onPause() {
         super.onPause()
@@ -411,12 +419,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
     }
 
-    // TODO: this is where the line points are drawn
     override fun onTaskDone(vararg values: Any?) {
         if (currentPolyline != null) {
             currentPolyline!!.remove()
         }
-//        currentPolyline = map.addPolyline((PolylineOptions) values[0]);
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
         Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
@@ -427,7 +433,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
     }
 
      fun createIconMapMarkers(linePoints: MutableList<LatLng>) {
-
         getWeatherRouteIcon(linePoints[(linePoints.size*.75).toInt()])
         getWeatherRouteIcon(linePoints[(linePoints.size*.50).toInt()])
         getWeatherRouteIcon(linePoints[(linePoints.size*.25).toInt()])
@@ -454,13 +459,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             binding.weather.visibility = View.INVISIBLE
             OnClickTime()
             binding.directionsLayout.visibility = View.INVISIBLE
-
         }
-
     }
 
     fun makeDirectionsVisible(view:View){
-        Log.i("jim", "Make directions visible")
         if(binding.directionsLayout.visibility == View.VISIBLE){
             binding.directionsLayout.visibility = View.INVISIBLE
 
@@ -477,38 +479,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     }
 
-//    private fun addSingleTab(lat: Double, long: Double){
-//        Log.i("jimbo", "adding single tab")
-//            coords.add(LatLng(lat, long))
-//            val i = coords.size.minus(1)
-//            binding.tabLayout.apply {
-//
-//                val mFragment = WeatherFragment(coords[i], "city $i")
-//                val mBundle = Bundle()
-//                mBundle.putString("mText", "e")
-//                mFragment.arguments = mBundle
-//                adapter.addFrag(mFragment, "arguments $coords[i]")
-//                addTab(this.newTab().setText("current location"))
-//
-//                addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-//                    override fun onTabSelected(tab: TabLayout.Tab?) {
-//                        tab?.position?.let {
-//                            binding.viewPager.currentItem = it
-//                        }
-//                    }
-//
-//                    override fun onTabUnselected(tab: TabLayout.Tab?) {
-//                    }
-//
-//                    override fun onTabReselected(tab: TabLayout.Tab?) {
-//                    }
-//                })
-//
-//            }
-//
-//        setupViewPager()
-//    }
-
     private fun setupTabLayout() {
 
         if(binding.tabLayout.tabCount > 1) {
@@ -521,11 +491,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             setupViewPager()
         }
 
-
         binding.tabLayout.apply {
-
             for (i in coords.indices) {
-                Log.i("jimbo","going through coords: ${coords[i]}")
                 val mFragment = WeatherFragment(coords[i], destinationList[i])
                 val mBundle = Bundle()
                // mBundle.putString("mText", "e")
@@ -550,11 +517,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
         for (i in 0 until binding.tabLayout.tabCount) {
             (binding.tabLayout.getTabAt(i)?.view as LinearLayout).visibility = View.GONE
-            //   (binding.tabLayout.getTabAt(i)?.view as LinearLayout)
-
         }
-
-
     }
 
     fun setUpDestinations(){
@@ -564,10 +527,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
         binding.stops.addView(inflater, binding.stops.childCount)
         val inflater2 = LayoutInflater.from(this).inflate(R.layout.row_stop, null)
-
         inflater2.findViewById<EditText>(R.id.et_name).hint = "Enter Destination"
         inflater2.findViewById<Button>(R.id.xBtn).visibility = View.INVISIBLE
-
         binding.stops.addView(inflater2, binding.stops.childCount)
         numberOfLines+=2
     }
@@ -579,7 +540,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             deleteLine(inflater)
         }
         binding.stops.addView(inflater, binding.stops.childCount-1)
-
         numberOfLines++
     }
 
@@ -590,30 +550,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
     private fun saveData() {
         destinationList.clear()
-        // this counts the no of child layout
-        // inside the parent Linear layout
+        binding.directions.removeAllViews()
         val count = binding.stops.childCount
         var v: View?
-
         for (i in 0 until count) {
             v = binding.stops.getChildAt(i)
             val stopName: EditText = v.findViewById(R.id.et_name)
-            // val experience: Spinner = v.findViewById(R.id.exp_spinner)
-
-            // create an object of Language class
             val location = stopName.text.toString()
-
-            // add the data to arraylist
             destinationList.add(location)
-            Log.i("jimbo", "destinationlist size ${destinationList.size}")
-            Log.i("jimbo", "destinationlist add ${destinationList[i]}")
-
-            // stopName.text.clear()
             v.findViewById<EditText>(R.id.et_name).text.clear()
-
         }
-
-        //now that plan is available, make the weather tab available
         binding.weatherBtn.visibility = View.VISIBLE
         binding.directionBtn.visibility = View.VISIBLE
         coords = getLocCoords(destinationList)
@@ -621,24 +567,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         setupTabLayout()
         setupViewPager()
         hideKeybord()
-
-        //relocate map
-       // map.animateCamera(CameraUpdateFactory.newLatLngZoom(, 12f))
-
-
-
     }
     fun add_direction_Line( direction:String) {
-
         val directionView = TextView(this)
 
         directionView.text = direction
         directionView.setTextColor(resources.getColor( R.color.white))
         directionView.setTextSize(20F)
-        //directionView.setbo
         binding.directions.addView(directionView, binding.directions.childCount)
 
-        numberOfLines++
     }
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -659,6 +596,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
         binding.timePicker.setOnTimeChangedListener { _, hour, minute -> var hour = hour
             var am_pm = ""
+            depart = Pair(hour,minute)
+
             // AM_PM decider logic
             when {hour == 0 -> { hour += 12
                 am_pm = "AM"
@@ -672,28 +611,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
 
             val h = if (hour < 10) "0$hour" else hour
             val min = if (minute < 10) "0$minute" else minute
-            // display format of time
-            val msg = "$h : $min $am_pm"
-            binding.showTime.text = msg
-            binding.showTime.visibility = ViewGroup.VISIBLE
-            binding.showTime.visibility = ViewGroup.VISIBLE
+
             sdf.timeZone = TimeZone.getTimeZone("UTC")
 
             val simpleDateFormat = SimpleDateFormat("yyyy-MMM-dd HH:mm:ss")
             simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
             val localDateFormat = SimpleDateFormat("yyyy-MMM-dd HH:mm:ss")
-            val unix = localDateFormat.parse(simpleDateFormat.format(Date()))
-
+            unix = localDateFormat.parse(simpleDateFormat.format(Date()))
 
             unix.hours = hour
             if(am_pm == "PM"){
                 unix.hours += 12
             }
-            Log.i("e", "hour is : ${unix.hours}")
-
             unix.minutes = minute
-            Log.i("e", "gmt: ${unix.time}")
             departureTime = unix.time
+            binding.departTime.text = "Departure Time: "+ String.format("%02d:%02d ${am_pm}", hour, minute)
         }
     }
     fun getWeatherRouteIcon(coord: LatLng){
@@ -701,7 +633,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         var icon = 0
 
         // Request a string response from the provided URL.
-        Log.i("jimbo", "in get weather route icon, before request")
         val request = JsonObjectRequest(
             Request.Method.GET, weatherUrl, null,
             { response ->
@@ -746,9 +677,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
                     } else if(iconId == "icon50n"){
                         icon = R.drawable.icon50n
                     }
-
                     placeCustomMarkerOnMap(coord, icon)
-
                    }
 
             },
@@ -758,12 +687,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         )
         theRequestQueue?.add(request) ?: println("Opps! Couldn't create a queue.")
     }
+
     fun html2text(html: String): String {
         return Html.fromHtml(html).toString()
 
     }
-
-
 
 }
 
