@@ -56,7 +56,7 @@ class PointsParser(mContext: Context, directionMode: String) :
             }
             // Adding all the points in the route to LineOptions
             lineOptions.addAll(points)
-            lineOptions.width(20f)
+            lineOptions.width(10f)
             lineOptions.color(Color.BLUE)
         }
 
