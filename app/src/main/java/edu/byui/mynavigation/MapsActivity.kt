@@ -195,8 +195,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             }
             urlDestStr = destStr + waypointStr
         } else {
-            urlDestStr = destStr
-//            urlDestStr = "&alternatives=true$destStr"
+//            urlDestStr = destStr
+            urlDestStr = "$destStr&alternatives=true"
         }
         getDirections(urlOriginLocStr,urlDestStr)
 //        map.animateCamera(CameraUpdateFactory.newLatLngZoom(originCoords, 8f))

@@ -31,7 +31,10 @@ class PointsParser(mContext: Context, directionMode: String) :
             // Starts parsing data
             routes = parser.parse(jObject)
             Log.d("mylog", "Executing routes")
-            Log.d("mylog", routes.toString())
+//            Log.d("myRoute", "${routes.size}")
+//            Log.d("myRoute","${routes[0]}")
+//            Log.d("myRoute","${routes[1]}")
+//            Log.d("myRoute","${routes[2]}")
         } catch (e: Exception) {
             Log.d("mylog", e.toString())
             e.printStackTrace()
@@ -59,7 +62,7 @@ class PointsParser(mContext: Context, directionMode: String) :
             }
             // Adding all the points in the route to LineOptions
             lineOptions.addAll(points)
-            lineOptions.width(20f)
+            lineOptions.width(10f)
             lineOptions.color(Color.BLUE)
         }
 

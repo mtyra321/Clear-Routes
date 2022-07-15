@@ -15,10 +15,6 @@ import kotlin.collections.HashMap
  * Created by Vishal on 10/20/2018.
  */
 class DataParser {
-//    val legDurations: MutableList<Int> = ArrayList() // in seconds
-//    val legDistances: MutableList<Int> = ArrayList() // in meters
-//    val legEndLocs: MutableList<JSONObject> = ArrayList() // [{lat: val, lng: val},{lat: val,lng: val}]
-    var instructions: MutableList<String> = ArrayList() // ["turn left","turn right", "merge",...]
     fun parse(jObject: JSONObject): MutableList<List<HashMap<String, String>>> {
         val routes: MutableList<List<HashMap<String, String>>> = ArrayList()
         val jRoutes: JSONArray
@@ -34,19 +30,9 @@ class DataParser {
 //                val path: MutableList = mutableListOf<HashMap>()
                 /** Traversing all legs  */
                 for (j in 0 until jLegs.length()) {
-                    /** add each leg duration, distance, and end_location to arrays */
-//                    val legDuration = ((jLegs[j] as JSONObject)["duration"] as JSONObject)["value"] as Int
-//                    legDurations.add(legDuration) // [31653,11799,70097] (seconds)
-//                    val legDistance = ((jLegs[j] as JSONObject)["distance"] as JSONObject)["value"] as Int
-//                    legDistances.add(legDistance) // [932311,349512,2137682] (meters)
-//                    val legEndLoc = ((jLegs[j] as JSONObject)["end_location"] as JSONObject)
-//                    legEndLocs.add(legEndLoc) // [{"lat": 34.052, "lng": -118.243},{"lat":35.4675,"lng":-97.5164077},...]
                     jSteps = (jLegs[j] as JSONObject).getJSONArray("steps")
                     /** Traversing all steps  */
                     for (k in 0 until jSteps.length()) {
-                        /** Put instruction steps into an array */
-                        var instruct = (jSteps[k] as JSONObject)["html_instructions"] as String
-                        instructions.add(instruct)
                         var polyline = ""
                         polyline =
                             ((jSteps[k] as JSONObject)["polyline"] as JSONObject)["points"] as String
