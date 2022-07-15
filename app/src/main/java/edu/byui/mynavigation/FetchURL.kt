@@ -24,9 +24,7 @@ class FetchURL(var mContext: Context) :
         try {
             // Fetching the data from web service
             data = downloadUrl(strings[0]!!)
-            Log.d("mylog", "Background task data $data")
         } catch (e: Exception) {
-            Log.d("Background Task", e.toString())
         }
         return data
     }
@@ -58,10 +56,8 @@ class FetchURL(var mContext: Context) :
                 sb.append(line)
             }
             data = sb.toString()
-            Log.d("mylog", "Downloaded URL: $data")
             br.close()
         } catch (e: Exception) {
-            Log.d("mylog", "Exception downloading URL: $e")
         } finally {
             iStream!!.close()
             urlConnection!!.disconnect()

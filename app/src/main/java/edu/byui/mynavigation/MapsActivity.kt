@@ -230,7 +230,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
         }
         var hoursLength = totalTimeOfTrip / 3600
         var minutesLength = (totalTimeOfTrip % 3600) / 60
-
+        binding.totalTime.text = "Total Time: ${hoursLength}:${minutesLength}"
         var hours = depart.first + hoursLength
         var minutes = depart.second + minutesLength
         if(minutes >= 60){
@@ -424,7 +424,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, TaskLoadedCallback
             currentPolyline!!.remove()
         }
         currentPolyline = map.addPolyline(values[0] as PolylineOptions)
-        Log.i("polyline", "onTaskDone: $currentPolyline")
         val linePoints = currentPolyline!!.points
         placeMarkerOnMap(linePoints[0])
         placeMarkerOnMap(linePoints.last())

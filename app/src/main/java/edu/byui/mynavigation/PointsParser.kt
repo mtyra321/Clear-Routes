@@ -30,10 +30,7 @@ class PointsParser(mContext: Context, directionMode: String) :
 
             // Starts parsing data
             routes = parser.parse(jObject)
-            Log.d("mylog", "Executing routes")
-            Log.d("mylog", routes.toString())
         } catch (e: Exception) {
-            Log.d("mylog", e.toString())
             e.printStackTrace()
         }
         return routes
